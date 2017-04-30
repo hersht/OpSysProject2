@@ -44,16 +44,26 @@ void printMemory(vector<vector<char> > memory){
 
 int defragment(vector<vector<char> > &memory, vector<Process> &processes, int time){
     //how long to halt processes for
+    
+    int s = 0;
+    bool start = false; 
     int count = 0;
     int pd = 0;
     for(unsigned int i = 0; i<memory.size(); i++){
         for(unsigned int j =0; j<memory[i].size(); j++){
+            if(!start){
+                s++;
+            }
             if(memory[i][j] == '.'){
+                if(!start){
+                    start = true;
+                }
                 pd++;
             }
         }
     }
-    count = 256-pd;
+    
+    count = 256-pd-s+1;
     //halt everything for count number of ms
     for(unsigned int i = 0; i<processes.size(); i++){
         int arr1 = processes[i].getArrivalTime1();
@@ -84,17 +94,27 @@ int defragment(vector<vector<char> > &memory, vector<Process> &processes, int ti
         }
     }
     //find processes that were shifted (for printing later)
-    char first = ' ';
+    bool go = false;
+     vector<char>temp2;
+    for(unsigned int i = 0; i<temp.size(); i++){
+        if(temp[i] == '.'){
+            go = true;
+        }
+        if(go){
+            temp2.push_back(temp[i]);
+        }
+    }
+   /* char first = ' ';
     bool f = false;
     if(temp[0]!='.'){
         f = true;
         first = temp[0];
-    }
-    set<char> myset( temp.begin(), temp.end() );
+    }*/
+    set<char> myset( temp2.begin(), temp2.end() );
     myset.erase('.');
-    if(f){
+   /* if(f){
         myset.erase(first);
-    }
+    }*/
     
     //defragment 1d array
     temp.erase(std::remove(temp.begin(), temp.end(), '.'), temp.end());
@@ -275,13 +295,14 @@ void bestFit(vector<Process> processes, vector<vector< char> > memory){
                     printMemory(memory);
                 }else{ //cannot place in memory at all--no room
                     cout<<"time "<<time<<"ms: Cannot place process "<<id<<" -- skipped!"<<endl;
+                    printMemory(memory);
                     terminated++;
                 }
             }
         }
         time++;
     }
-    cout<<"time "<<time<<"ms: Simulator ended (Contiguous -- Best-Fit)"<<endl;
+    cout<<"time "<<time-1<<"ms: Simulator ended (Contiguous -- Best-Fit)"<<endl;
 }
 
 // MAIN
