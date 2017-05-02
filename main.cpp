@@ -620,6 +620,86 @@ void worstFit(vector<Process> processes, vector<vector< char> > memory){
     cout<<"time "<<time-1<<"ms: Simulator ended (Contiguous -- Worst-Fit)"<<endl;
 }
 
+//To place pages into frames of physical memory, use a simple first-fit approach
+void nonContiguous(vector<Process> processes, vector<vector< char> > memory){
+    int terminated = 0;
+    int time = 0;
+    int n = processes.size();
+    int totalProcs = 0;
+    for(int i = 0; i<n; i++){
+        if(processes[i].getArrivalTime2()!=-1){
+            totalProcs++;
+        }
+    }
+    totalProcs+=n; //get total number of procceses that will run (i.e. if a process arrives twice (arrivalTime1, arrivalTime2), each arrival counts seperately)
+
+    cout<<"time "<<time<<"ms: Simulator started (Non-contiguous)"<<endl;
+    while(terminated<totalProcs){
+        //TIES: processes leave memory before other processes arrive
+        for(unsigned int i =0; i<processes.size(); i++){  //REMOVAL LOOP
+            char id = processes[i].getPid();
+            if(time == processes[i].getEndTime1() || time == processes[i].getEndTime2()){ //remove process from memory
+                for(unsigned int j = 0; j<memory.size(); j++){
+                    for(unsigned int k = 0; k<memory[j].size(); k++){
+                        if(memory[j][k]==id){ //replace process ID with "."
+                            memory[j][k]='.';
+                        }
+                    }
+                }
+                terminated++;
+                cout<<"time "<<time<<"ms: Process "<<id<<" removed:"<<endl;
+                printMemory(memory);
+            }
+        }
+        for(unsigned int i =0; i<processes.size(); i++){   //ARRIVAL LOOP
+            char id = processes[i].getPid();
+            int memSize = processes[i].getMemFrames();
+            bool arrivalVersion1 = false; //we are using arr2
+            if(time==processes[i].getArrivalTime1() || time==processes[i].getArrivalTime2()){
+                if(time==processes[i].getArrivalTime1()){ //we are using arr1
+                    arrivalVersion1 = true;
+                }
+                cout<<"time "<<time<<"ms: Process "<<id<<" arrived (requires "<<memSize<<" frames)"<<endl;
+                //place in memory
+                int totalEmpty = 0;
+                for(unsigned int j = 0; j<memory.size(); j++){ //loop through memory, see if there's enough space
+                    for(unsigned int k = 0; k<memory[j].size(); k++){
+                        if(memory[j][k]=='.'){ 
+                            totalEmpty++;
+                        }
+                    }
+                }
+                if(totalEmpty >= memSize){ //if we found a spot, place it
+                    if(arrivalVersion1){ //set removal times
+                        processes[i].setEndTime1(time+processes[i].getRunTime1());
+                    }
+                    else{
+                        processes[i].setEndTime2(time+processes[i].getRunTime2());
+                    }
+                    
+                    int x = 0;
+                    for(unsigned int j = 0; j<memory.size(); j++){ //loop through memory
+                        for(unsigned int k = 0; k<memory[j].size(); k++){
+                            if(x==memSize) break; //break if placed memSize frames of process
+                            if(memory[j][k] == '.'){
+                                memory[j][k] = id; //place process in memory at correct spot
+                                x++;
+                            }
+                        }
+                    }
+                    cout<<"time "<<time<<"ms: Placed process "<<id<<":"<<endl;
+                    printMemory(memory);
+                } else { //cannot place in memory at all--no room
+                    cout<<"time "<<time<<"ms: Cannot place process "<<id<<" -- skipped!"<<endl;
+                    terminated++;
+                }
+            }
+        }
+        time++;
+    }
+    cout<<"time "<<time-1<<"ms: Simulator ended (Non-contiguous)"<<endl;
+}
+
 // MAIN
 int main(int argc, char* argv[]) {
     
@@ -725,8 +805,12 @@ int main(int argc, char* argv[]) {
     }
     
     nextFit(processes, memory);
-    //bestFit(processes, memory);
-    //worstFit(processes, memory);
+    cout << endl;
+    bestFit(processes, memory);
+    cout << endl;
+    worstFit(processes, memory);
+    cout << endl;
+    nonContiguous(processes, memory);
     
     return 0;
 }
